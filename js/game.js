@@ -11,6 +11,8 @@ ld30.init = function() {
 
 	ld30.renderer = new THREE.WebGLRenderer({antialias: true});
 	ld30.renderer.setSize(ld30.width, ld30.height);
+	ld30.renderer.shadowMapEnabled = true;
+	ld30.renderer.shadowMapSoft = true;
 
 	document.body.appendChild(ld30.renderer.domElement);
 
@@ -29,24 +31,27 @@ ld30.init = function() {
 
 	var plane = new THREE.Mesh(
 			new THREE.PlaneGeometry(150,150, 1, 1),
-			new THREE.MeshBasicMaterial({color: 0xff8000})
+			new THREE.MeshLambertMaterial({color: 0xff8000})
 		);
+	plane.receiveShadow = true;
 	ld30.scene.add(plane);
 
 
 	var player = new THREE.Mesh(
 			new THREE.SphereGeometry(10,16,16),
-			new THREE.MeshBasicMaterial({color: 0x00ff00})
+			new THREE.MeshLambertMaterial({color: 0x00ff00})
 		);
+	player.castShadow = true;
 	player.position.z = 10;
 
 	ld30.scene.add(player);
 
 
-/*	var light = new THREE.DirectionalLight(0xffffff);
+	var light = new THREE.DirectionalLight(0xffffff);
 	light.position.set(300,0,300);
+	light.castShadow = true;
 	ld30.scene.add(light);
-*/
+
 
 }
 
