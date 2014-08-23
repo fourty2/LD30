@@ -10,11 +10,17 @@ var Enemy = function(position, size, gameScope) {
 	this.mesh.position.z = position.z;
 	this.mesh.position.y = position.y;
 	this.game = gameScope;
+	this.healthPoints = size;
 	return this;
 }
 
 Enemy.prototype.getMesh = function() {
 	return this.mesh;
+}
+
+Enemy.prototype.damage = function(value)  {
+	this.healthPoints -=value;
+	return this.healthPoints > 0;
 }
 
 Enemy.prototype.update = function() {

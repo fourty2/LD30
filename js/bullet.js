@@ -21,10 +21,29 @@ Bullet.prototype.getMesh = function() {
 Bullet.prototype.update = function() {
 
 	this.mesh.translateZ(-20);
-	if (this.collidesWithMap()) {
+	if (this.collidesWithMap() || this.collidesWithEnemy()) {
 		return false;
 	}
 	return true;
+}
+
+Bullet.prototype.collidesWithEnemy = function() {
+	var collisionList = [];
+	for (x=0;x<this.game.enemies.length;x++) {
+		collisionList = [this.game.enemies[x].getMesh()];
+		for (i=0;i<this.game.testRays.length;i++) {
+			this.game.caster.set(this.mesh.position, this.game.testRays[i]);
+			collisions = this.game.caster.intersectObjects(collisionList);
+			if (collisions.length > 0 && collisions[0].distance <= 20) {
+				if (!this.game.enemies[x].damage(5)) {
+					this.game.scene.remove(this.game.enemies[x].getMesh());
+				}
+				return true;
+			}
+		}		
+	}
+	return false;
+
 }
 
 Bullet.prototype.collidesWithMap = function() {
