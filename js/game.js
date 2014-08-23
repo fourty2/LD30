@@ -5,6 +5,9 @@ var ld30 = {
 	player: null,
 	scene: null,
 	mousePos: null,
+	entities: [],
+	enemies: [],
+	bullets: [], // später entities?
 	collidableMeshes: [],
 	init:  function() {
 		var WIDTH = window.innerWidth;
@@ -160,7 +163,20 @@ var ld30 = {
 		light.castShadow = true;
 		this.scene.add(light);
 
+		this.initEnemies();
 
+	},
+	initEnemies: function() {
+		for (i=0;i<5; i++) {
+			pos = new THREE.Vector3(
+				-375 + (Math.floor((Math.random() * 15) + 1) * 50),
+				10,
+				-375 + (Math.floor((Math.random() * 15) + 1) * 50)
+				);
+			enemy = new Enemy(pos, Math.floor((Math.random() * 15) + 6), this);
+			this.enemies.push(enemy);
+			this.scene.add(enemy.getMesh());
+		}		
 	},
 	initPlayer: function() {
 		this.player = new THREE.Mesh(
@@ -195,7 +211,8 @@ var ld30 = {
 		document.addEventListener( 'mousemove', this.onMouseMove, false );
 		document.addEventListener( 'keydown', this.onKeyDown, false );
 		document.addEventListener( 'keyup', this.onKeyUp, false );
-
+		document.addEventListener( 'click', this.onClick, false);
+		document.addEventListener( 'mouseout', this.onMouseOut, false);
 	},
 	checkCollision: function() {
 		mapx = (this.player.position.x + 375)/50;
@@ -234,6 +251,12 @@ var ld30 = {
 
 		return false;
 	},
+	fireBullet: function() {
+		this.bullets.push(new Bullet(this.player.position, this.player.rotation, this));
+
+		this.scene.add(this.bullets[this.bullets.length - 1].getMesh());
+
+	},
 	render: function() {
 		var oldPosition = this.player.position.clone();
 		this.controls.update(0.016); 
@@ -241,6 +264,27 @@ var ld30 = {
 			this.player.position.set(oldPosition.x, oldPosition.y, oldPosition.z);
 		}
 		oldPosition = null;
+
+		// bewege alle entities
+		/*this.entities.forEach(function(entity)) {
+			entity.update();
+		}*/
+
+		for (i = 0; i< this.enemies.length; i++) {
+			if (!this.enemies[i].update()) {
+				this.scene.remove(this.enemies[i].getMesh());
+				this.enemies.splice(i, 1);
+				//i--;
+			}
+		}
+
+		for (i = 0; i< this.bullets.length; i++) {
+			if (!this.bullets[i].update()) {
+				this.scene.remove(this.bullets[i].getMesh());
+				this.bullets.splice(i, 1);
+				//i--;
+			}
+		}
 
 		this.camera.update();
 		this.renderer.render(this.scene, this.camera);
@@ -259,19 +303,19 @@ var ld30 = {
 	    if( (x > 0 && x < threshold) || (x < 0 && x > -threshold) ) {
 	        x = 0;
 	    }
-
-	  /*  if( (y > 0 && y < threshold) || (y < 0 && y > -threshold) ) {
-	        y = 0;
-	    }
-	*/
 	    ld30.mousePos.set( x, 0);
 	},
-
+	onMouseOut: function (e) {
+		ld30.mousePos.set(0,0);
+	},
 	onKeyDown: function( e ) {
 	    var key = e.keyCode;
 	 
 	    if( key === 87 ) {
 	        ld30.controls.setForward( true );
+	    }
+	    else if( key === 83 ) {
+	        ld30.controls.setBackward( true );
 	    }
 	    else if( key === 65 ) {
 	        ld30.controls.setLeft( true );
@@ -287,12 +331,18 @@ var ld30 = {
 	    if( key === 87 ) {
 	        ld30.controls.setForward( false );
 	    }
+	    else if( key === 83 ) {
+	        ld30.controls.setBackward( false );
+	    }
 	    else if( key === 65 ) {
 	        ld30.controls.setLeft( false );
 	    }
 	    else if( key === 68 ) {
 	        ld30.controls.setRight( false );
 	    }
+	},
+	onClick: function (e) {
+		ld30.fireBullet();
 	}
 
 
