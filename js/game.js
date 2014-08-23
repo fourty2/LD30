@@ -42,7 +42,7 @@ var ld30 = {
 	initWorld: function() {
 		// erstmal plane, später model
 
-		var planeGeometry = new THREE.PlaneGeometry(1000,1000, 1, 1);
+		var planeGeometry = new THREE.PlaneGeometry(800,800, 1, 1);
 		planeGeometry.applyMatrix( 
 			 new THREE.Matrix4().makeRotationX(-Math.PI/2)
 			);
@@ -54,6 +54,55 @@ var ld30 = {
 		plane.receiveShadow = true;
 		this.scene.add(plane);
 
+
+		// level
+		// 16 * 16
+		var testLevel = [
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+			[1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+			[1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1],
+			[1,2,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1],
+			[1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+
+		]
+
+		for (var y=0;y<=15;y++) {
+			for (var x=0;x<=15;x++) {
+				switch (testLevel[y][x]) {
+					case 1:
+						blockMesh = new THREE.Mesh(
+							new THREE.CubeGeometry(50,50,50),
+							new THREE.MeshLambertMaterial({color: 0xff0000})
+						);
+						blockMesh.castShadow = true;
+						blockMesh.receiveShadow = true;
+						blockMesh.position.x = -375 + (x*50);
+						blockMesh.position.z = -375 + (y*50);
+
+						this.scene.add(blockMesh); 
+					break;
+					case 2:
+						this.playerStartPos = {x: -375 + (x*50), z:-375 + (y*50)};
+					break;
+
+
+				}
+			}
+		}
+
+
+
 		// lights
 		var light = new THREE.DirectionalLight(0xffffff);
 		light.position.set(300,40,300);
@@ -63,19 +112,21 @@ var ld30 = {
 
 	},
 	initPlayer: function() {
-		var player = new THREE.Mesh(
+		this.player = new THREE.Mesh(
 				new THREE.SphereGeometry(5,8,8),
 				new THREE.MeshLambertMaterial({color: 0x00ff00})
 			);
-		player.castShadow = true;
-		player.position.y = 5;
+		this.player.castShadow = true;
+		this.player.position.y = 5;
+		this.player.position.x = this.playerStartPos.x;
+		this.player.position.z = this.playerStartPos.z;
 
-		this.scene.add(player);
+		this.scene.add(this.player);
 
 		this.camera.addTarget({
 			name: 'player',
-			targetObject: player,
-			cameraPosition: new THREE.Vector3(20,20,200),
+			targetObject: this.player,
+			cameraPosition: new THREE.Vector3(0,50,200),
 			fixed: false,
 			stiffness: 0.1,
 			matchRotation: true
@@ -86,7 +137,7 @@ var ld30 = {
 
 		this.controls = new ObjectControls({
 			mousePos: this.mousePos,
-			targetObject: player,
+			targetObject: this.player,
 		/*	rotationDamping: 10000*/
 		});
 
