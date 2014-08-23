@@ -1,89 +1,45 @@
+
+
+
 var Bullet = function(position, rotation, gameScope) {
-	
+	Entity.call(this, position, gameScope);
+	this.initRotation = rotation;
+}
+
+Bullet.prototype = Object.create(Entity.prototype);
+
+Bullet.prototype.createMesh = function() {
 	this.mesh = new THREE.Mesh(
-		new THREE.CubeGeometry(5,5,5),
+		new THREE.BoxGeometry(5,5,5),
 		new THREE.MeshLambertMaterial({color: 0xffff00})
 	);
 	this.mesh.castShadow = true;
 	this.mesh.receiveShadow = true;
-	this.mesh.position.x = position.x;
-	this.mesh.position.z = position.z;
-	this.mesh.position.y = position.y;
-	this.mesh.rotation.copy(rotation);
-	this.game = gameScope;
-	return this;
-}
-
-Bullet.prototype.getMesh = function() {
+	this.mesh.position.x = this.initPosition.x;
+	this.mesh.position.z = this.initPosition.z;
+	this.mesh.position.y = this.initPosition.y;
+	this.mesh.rotation.copy(this.initRotation);
 	return this.mesh;
 }
 
 Bullet.prototype.update = function() {
 
 	this.mesh.translateZ(-20);
-	if (this.collidesWithMap() || this.collidesWithEnemy()) {
+	if (this.collidesWithMap() || this.collidesWithEntity()) {
+		this.kill();
 		return false;
 	}
 	return true;
 }
 
-Bullet.prototype.collidesWithEnemy = function() {
-	var collisionList = [];
-	for (x=0;x<this.game.enemies.length;x++) {
-		collisionList = [this.game.enemies[x].getMesh()];
-		for (i=0;i<this.game.testRays.length;i++) {
-			this.game.caster.set(this.mesh.position, this.game.testRays[i]);
-			collisions = this.game.caster.intersectObjects(collisionList);
-			if (collisions.length > 0 && collisions[0].distance <= 20) {
-				if (!this.game.enemies[x].damage(5)) {
-					this.game.scene.remove(this.game.enemies[x].getMesh());
-				}
-				return true;
-			}
-		}		
-	}
-	return false;
+Bullet.prototype.preKill = function() {
 
 }
 
-Bullet.prototype.collidesWithMap = function() {
-
-	mapx = (this.mesh.position.x + 375)/50;
-	mapy = (this.mesh.position.z + 375)/50;
-	if (mapx <1 || mapx > 16 || mapy < 1 || mapy > 16) {
-		return true;
-	}
-	fmapx = Math.floor(mapx);
-	cmapx = Math.ceil(mapx);
-	fmapy = Math.floor(mapy);
-	cmapy = Math.ceil(mapy);
-
-
-	var preCollisionList = [
-		this.game.collidableMeshes[fmapy][fmapx],
-		this.game.collidableMeshes[cmapy][fmapx],
-		this.game.collidableMeshes[fmapy][cmapx],
-		this.game.collidableMeshes[cmapy][cmapx],
-	];
-	var collisionList = [];
-	preCollisionList.forEach(function(elem) {
-		if (!Number.isInteger(elem)) {
-			collisionList.push(elem);
+Bullet.prototype.afterEntityCollide = function(index) {
+	if (this.game.entities[index] instanceof Enemy) {
+		if (!this.game.entities[index].damage(5)) {
+			this.game.entities[index].kill();
 		}
-	});
-	if (collisionList.length == 0) {
-		return false;
-	}
-
-	// raycaster starten
-	for (i=0;i<this.game.testRays.length;i++) {
-		this.game.caster.set(this.mesh.position, this.game.testRays[i]);
-		collisions = this.game.caster.intersectObjects(collisionList);
-		if (collisions.length > 0 && collisions[0].distance <= 30) {
-			return true;
-		}
-
-	}
-
-	return false;
+	} 
 }

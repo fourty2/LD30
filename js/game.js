@@ -6,8 +6,6 @@ var ld30 = {
 	scene: null,
 	mousePos: null,
 	entities: [],
-	enemies: [],
-	bullets: [], // später entities?
 	collidableMeshes: [],
 	init:  function() {
 		var WIDTH = window.innerWidth;
@@ -15,8 +13,8 @@ var ld30 = {
 		var NEAR = 0.1;
 		var FAR = 1000;
 		var FOV = 45;
-
-		this.renderer = new THREE.WebGLRenderer({antialias: true});
+		gamecanvas = document.getElementById('gamecanvas');
+		this.renderer = new THREE.WebGLRenderer({canvas: gamecanvas, antialias: true});
 		this.renderer.setSize(WIDTH, HEIGHT);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.shadowMapSoft = true;
@@ -38,8 +36,10 @@ var ld30 = {
 		// player
 		this.initPlayer();
 
+		// enemies
+		this.initEnemies();
 
-		document.body.appendChild(this.renderer.domElement);
+		//document.body.appendChild(this.renderer.domElement);
 
 		this.animate();
 	},
@@ -100,7 +100,7 @@ var ld30 = {
 				switch (this.testLevel[y][x]) {
 					case 1:
 						blockMesh = new THREE.Mesh(
-							new THREE.CubeGeometry(50,50,50),
+							new THREE.BoxGeometry(50,50,50),
 							new THREE.MeshLambertMaterial({color: 0xff0000})
 						);
 						blockMesh.castShadow = true;
@@ -117,7 +117,7 @@ var ld30 = {
 					case 3:
 						// schlüssel
 						blockMesh = new THREE.Mesh(
-							new THREE.CubeGeometry(20,50,4),
+							new THREE.BoxGeometry(20,50,4),
 							new THREE.MeshLambertMaterial({color: 0x0000ff})
 						);
 						blockMesh.castShadow = true;
@@ -129,7 +129,7 @@ var ld30 = {
 					case 4:
 						// mauer
 						blockMesh = new THREE.Mesh(
-							new THREE.CubeGeometry(50,15,4),
+							new THREE.BoxGeometry(50,15,4),
 							new THREE.MeshLambertMaterial({color: 0xff0077})
 						);
 						blockMesh.castShadow = true;
@@ -158,12 +158,34 @@ var ld30 = {
 
 
 		// lights
-		var light = new THREE.DirectionalLight(0xffffff);
+	/*	var light = new THREE.DirectionalLight(0xffffff);
 		light.position.set(300,40,300);
 		light.castShadow = true;
 		this.scene.add(light);
+*/
+ var light = new THREE.DirectionalLight(0xffA020);
+      light.intensity = 2.0;
+//      light.position.set(0.5, 0.2, -2);
+	  light.position.set(400,120,400);
+      light.target.position.set(0, 0, 0);
+      light.castShadow = true;
+      light.shadowDarkness = 0.8;
+      light.shadowMapWidth = 2048;
+      light.shadowMapHeight = 2048;
+     // light.shadowCameraVisible = true; // only for debugging
+      // these six values define the boundaries of the yellow box seen above
+   /*   light.shadowCameraNear = -10;
+      light.shadowCameraFar = 15;
+      light.shadowCameraLeft = -10;
+      light.shadowCameraRight = 10;
+      light.shadowCameraTop = 10;
+      light.shadowCameraBottom = -10;*/
+      this.scene.add(light);
 
-		this.initEnemies();
+		var ambientLight = new THREE.AmbientLight(0x001122);
+        this.scene.add(ambientLight);
+
+
 
 	},
 	initEnemies: function() {
@@ -173,9 +195,11 @@ var ld30 = {
 				10,
 				-375 + (Math.floor((Math.random() * 15) + 1) * 50)
 				);
+
 			enemy = new Enemy(pos, Math.floor((Math.random() * 15) + 6), this);
-			this.enemies.push(enemy);
-			this.scene.add(enemy.getMesh());
+			mesh = enemy.createMesh();
+			this.entities.push(enemy);
+			this.scene.add(mesh);
 		}		
 	},
 	initPlayer: function() {
@@ -184,6 +208,7 @@ var ld30 = {
 				new THREE.MeshLambertMaterial({color: 0x00ff00})
 			);
 		this.player.castShadow = true;
+		this.player.receiveShadow = true;
 		this.player.position.y = 5;
 		this.player.position.x = this.playerStartPos.x;
 		this.player.position.z = this.playerStartPos.z;
@@ -252,9 +277,11 @@ var ld30 = {
 		return false;
 	},
 	fireBullet: function() {
-		this.bullets.push(new Bullet(this.player.position, this.player.rotation, this));
+		var bullet = new Bullet(this.player.position, this.player.rotation, this);
+		mesh = bullet.createMesh();
+		this.entities.push(bullet);
 
-		this.scene.add(this.bullets[this.bullets.length - 1].getMesh());
+		this.scene.add(mesh);
 
 	},
 	render: function() {
@@ -269,22 +296,13 @@ var ld30 = {
 		/*this.entities.forEach(function(entity)) {
 			entity.update();
 		}*/
-
-		for (i = 0; i< this.enemies.length; i++) {
-			if (!this.enemies[i].update()) {
-				this.scene.remove(this.enemies[i].getMesh());
-				this.enemies.splice(i, 1);
-				//i--;
+		for (var i = this.entities.length-1; i>=0; i--) {
+			if (this.entities[i] instanceof Entity) {
+				this.entities[i].update();
 			}
 		}
 
-		for (i = 0; i< this.bullets.length; i++) {
-			if (!this.bullets[i].update()) {
-				this.scene.remove(this.bullets[i].getMesh());
-				this.bullets.splice(i, 1);
-				//i--;
-			}
-		}
+
 
 		this.camera.update();
 		this.renderer.render(this.scene, this.camera);
