@@ -41,5 +41,10 @@ Bullet.prototype.afterEntityCollide = function(index) {
 		if (!this.game.entities[index].damage(5)) {
 			this.game.entities[index].kill();
 		}
-	} 
+		return true;
+	} else if (this.game.entities[index] instanceof Door) {
+		this.game.entities[index].open();
+		return true;
+	}
+	return false;
 }

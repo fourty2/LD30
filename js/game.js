@@ -6,6 +6,7 @@ var ld30 = {
 	scene: null,
 	mousePos: null,
 	entities: [],
+	collectedKeys: [],
 	collidableMeshes: [],
 	init:  function() {
 		var WIDTH = window.innerWidth;
@@ -65,13 +66,13 @@ var ld30 = {
 			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 			[1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
 			[1,0,3,0,1,0,0,0,0,0,0,0,1,0,0,1],
-			[1,4,4,4,1,0,0,0,0,0,0,0,0,0,0,1],
+			[1,7,7,7,1,0,0,0,0,0,0,0,0,0,0,1],
 			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 			[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
 			[1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1],
-			[1,2,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+			[1,0,0,0,0,4,0,0,1,1,0,0,0,0,0,1],
 			[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+			[1,0,2,0,0,0,0,0,1,0,0,0,0,0,0,1],
 			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 			[1,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1],
@@ -114,41 +115,25 @@ var ld30 = {
 					case 2:
 						this.playerStartPos = {x: -375 + (x*50), z:-375 + (y*50)};
 					break;
+					// 3-5 = keys
 					case 3:
-						// schlüssel
-						blockMesh = new THREE.Mesh(
-							new THREE.BoxGeometry(20,50,4),
-							new THREE.MeshLambertMaterial({color: 0x0000ff})
-						);
-						blockMesh.castShadow = true;
-						blockMesh.receiveShadow = true;
-						blockMesh.position.x = -375 + (x*50);
-						blockMesh.position.z = -375 + (y*50);
-						this.scene.add(blockMesh); 
+						key = new Key(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 0xff0000, this);
+						this.entities.push(key);
+						this.scene.add(key.createMesh());
+					
 					break;
 					case 4:
-						// mauer
-						blockMesh = new THREE.Mesh(
-							new THREE.BoxGeometry(50,15,4),
-							new THREE.MeshLambertMaterial({color: 0xff0077})
-						);
-						blockMesh.castShadow = true;
-						blockMesh.receiveShadow = true;
-						blockMesh.position.x = -375 + (x*50);
-						blockMesh.position.z = -375 + (y*50);
-						this.scene.add(blockMesh); 
-						blockMesh = new THREE.Mesh(
-							new THREE.CubeGeometry(50,7,4),
-							new THREE.MeshLambertMaterial({color: 0xff0077})
-						);
-						blockMesh.castShadow = true;
-						blockMesh.receiveShadow = true;
-						blockMesh.position.x = -375 + (x*50);
-						blockMesh.position.z = -375 + (y*50);
-
-						blockMesh.position.y = 20;
-						this.scene.add(blockMesh); 
-						
+						key = new Key(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 0x00ff88, this);
+						this.entities.push(key);
+						this.scene.add(key.createMesh());
+					
+					break;
+	
+					// 6-8 = doors
+					case 7:
+						door = new Door(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 0x00ff88, this);
+						this.entities.push(door);
+						this.scene.add(door.createMesh());
 					break;
 
 				}
@@ -202,6 +187,14 @@ var ld30 = {
 			this.scene.add(mesh);
 		}		
 	},
+	playerHasKey: function(color) {
+		for (var i = 0; i<this.collectedKeys.length; i++) {
+			if (this.collectedKeys[i].keyColor == color) {
+				return true;
+			}
+		}
+		return false;
+	},
 	initPlayer: function() {
 		this.player = new THREE.Mesh(
 				new THREE.SphereGeometry(5,8,8),
@@ -239,6 +232,7 @@ var ld30 = {
 		document.addEventListener( 'click', this.onClick, false);
 		document.addEventListener( 'mouseout', this.onMouseOut, false);
 	},
+	// player verhalten - auslagern
 	checkCollision: function() {
 		mapx = (this.player.position.x + 375)/50;
 		mapy = (this.player.position.z + 375)/50;
@@ -276,20 +270,47 @@ var ld30 = {
 
 		return false;
 	},
+	// player verhalten -- auslagern
+	collidesWithEntity: function() {
+		var collisionList = [];
+		for (var entityIndex = 0; entityIndex < this.entities.length; entityIndex++) {
+			if (this.entities[entityIndex].alive) {
+			collisionList = [this.entities[entityIndex].getMesh()];
+			for (i = 0; i < this.testRays.length; i++) {
+				this.caster.set(this.player.position, this.testRays[i]);
+				collisions = this.caster.intersectObjects(collisionList);
+				if (collisions.length > 0 && collisions[0].distance <= 30) {
+					if (this.entities[entityIndex] instanceof Door) {
+						if (this.playerHasKey(this.entities[entityIndex].doorColor)) {
+							this.entities[entityIndex].open();
+						} else {
+							return true;
+						}
+					} else if (this.entities[entityIndex] instanceof Key) {
+						this.collectedKeys.push(this.entities[entityIndex]);
+						this.entities[entityIndex].collect();
+					}
+				}
+			}		
+
+			}
+		}
+		return false;
+	},
 	fireBullet: function() {
 		var bullet = new Bullet(this.player.position, this.player.rotation, this);
 		mesh = bullet.createMesh();
 		this.entities.push(bullet);
 
 		this.scene.add(mesh);
-
 	},
 	render: function() {
 		var oldPosition = this.player.position.clone();
 		this.controls.update(0.016); 
-		if (this.checkCollision()) {
+		if (this.checkCollision() || this.collidesWithEntity()) {
 			this.player.position.set(oldPosition.x, oldPosition.y, oldPosition.z);
 		}
+		
 		oldPosition = null;
 
 		// bewege alle entities

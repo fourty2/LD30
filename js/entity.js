@@ -27,6 +27,7 @@ Entity.prototype = {
 		this.mesh.position.x = this.initPosition.x;
 		this.mesh.position.z = this.initPosition.z;
 		this.mesh.position.y = this.initPosition.y;
+		this.setAlive();
 		return this.mesh;
 	},
 	setAlive: function() {
@@ -60,6 +61,7 @@ Entity.prototype = {
 			return false;
 		}
 
+
 		// raycaster starten
 		for (i=0;i<this.game.testRays.length;i++) {
 			this.game.caster.set(this.mesh.position, this.game.testRays[i]);
@@ -75,6 +77,7 @@ Entity.prototype = {
 	},
 	afterEntityCollide: function(entityIndex) {
 		// maybe damage to enemies?
+		return true;
 	},
 	collidesWithEntity: function() {
 		var collisionList = [];
@@ -84,8 +87,7 @@ Entity.prototype = {
 				this.game.caster.set(this.mesh.position, this.game.testRays[i]);
 				collisions = this.game.caster.intersectObjects(collisionList);
 				if (collisions.length > 0 && collisions[0].distance <= (this.boundingBox / 2)) {
-					this.afterEntityCollide(entityIndex);
-					return true;
+					return this.afterEntityCollide(entityIndex);
 				}
 			}		
 		}
