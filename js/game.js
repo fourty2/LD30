@@ -7,7 +7,14 @@ var ld30 = {
 	mousePos: null,
 	entities: [],
 	collectedKeys: [],
+	keys: {},
 	collidableMeshes: [],
+	currentLevel: null,
+	currentWorld: 1,
+	hud: {},
+	actionLedger: {},
+	startTime: 0,
+	lastCheck: 0,
 	init:  function() {
 		var WIDTH = window.innerWidth;
 		var HEIGHT = window.innerHeight;
@@ -20,6 +27,8 @@ var ld30 = {
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.shadowMapSoft = true;
 
+		this.hud.keyInfo = document.getElementById('keyinfo');
+		this.hud.timeInfo = document.getElementById('timeinfo');
 
 		// scene
 		this.scene = new THREE.Scene();
@@ -30,19 +39,147 @@ var ld30 = {
 		this.mousePos = new THREE.Vector2();
 
 		this.scene.add(this.camera);
+		this.loadLevel(TestLevel)
 
-		// world
+		// basic world .. 
 		this.initWorld();
 
-		// player
-		this.initPlayer();
 
-		// enemies
-		this.initEnemies();
 
+
+	
 		//document.body.appendChild(this.renderer.domElement);
 
 		this.animate();
+	},
+	loadLevel: function(level) {
+		this.currentLevel = level;
+		this.collidableMeshes = this.currentLevel.map;
+
+		// schlüssel anlegen
+		this.keys[1] = new Key(new THREE.Vector3(0,0,0), 
+					this.currentLevel.keyColors[1], this);
+		this.keys[2] = new Key(new THREE.Vector3(0,0,0), 
+					this.currentLevel.keyColors[2], this);
+		this.keys[3] = new Key(new THREE.Vector3(0,0,0), 
+					this.currentLevel.keyColors[3], this);
+
+		// türen anlegen
+
+		this.loadWorld(1);
+
+
+
+		
+
+	},
+	loadWorld: function(world) {
+		this.currentWorld = world;
+		var worldInfo = this.currentLevel.worlds[world];
+		// remove all entities
+		for (var x = this.entities.length-1; x>=0; x--) {
+			this.entities[x].killSoft();
+		}
+
+		for (var y=0;y<=15;y++) {
+			for (var x=0;x<=15;x++) {
+				switch (this.currentLevel.map[y][x]) {
+					case 2:
+						this.playerStartPos = {x: -375 + (x*50), z:-375 + (y*50)};
+					break;
+					// 3-5 = keys
+					case 3:
+						if (worldInfo.keyMapping[3]) {
+							var key = this.keys[worldInfo.keyMapping[3]];
+							key.initPosition = new THREE.Vector3(-375 + (x*50),10,-375 + (y*50));
+							this.entities.push(key);
+							this.scene.add(key.createMesh());							
+						}
+					break;
+					case 4:
+						if (worldInfo.keyMapping[4]) {
+							var key2 = this.keys[worldInfo.keyMapping[4]];
+							key2.initPosition = new THREE.Vector3(-375 + (x*50),10,-375 + (y*50));
+							this.entities.push(key2);
+							this.scene.add(key2.createMesh());
+						}
+					break;
+					case 5:
+						if (worldInfo.keyMapping[5]) {
+							var key3 = this.keys[worldInfo.keyMapping[5]];
+							key3.initPosition = new THREE.Vector3(-375 + (x*50),10,-375 + (y*50));
+							this.entities.push(key3);
+							this.scene.add(key3.createMesh());
+						}
+					break;
+					// 6-8 = doors
+					case 6:
+						var doorColor = this.currentLevel.keyColors[worldInfo.doorMapping[6]];
+						door = new Door(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), doorColor, this);
+						this.entities.push(door);
+						this.scene.add(door.createMesh());
+					break;
+					case 7:
+						var doorColor = this.currentLevel.keyColors[worldInfo.doorMapping[7]];
+						door = new Door(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), doorColor, this);
+						this.entities.push(door);
+						this.scene.add(door.createMesh());
+					break;
+					case 8:
+						var doorColor = this.currentLevel.keyColors[worldInfo.doorMapping[8]];
+						door = new Door(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), doorColor, this);
+						this.entities.push(door);
+						this.scene.add(door.createMesh());
+					break;
+					// 9-11 = portals
+					case 9:
+						var portalColor = 0x000000;
+						portal = new Portal(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 1, portalColor, this);
+						this.entities.push(portal);
+						this.scene.add(portal.createMesh());
+					break;
+					case 10:
+						var portalColor = 0xffffff;
+						portal = new Portal(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 2, portalColor, this);
+						this.entities.push(portal);
+						this.scene.add(portal.createMesh());
+						break;
+
+
+				}
+			}
+		}
+		// player
+		this.initPlayer();
+		// enemies
+		this.initEnemies();
+
+		// build world
+		if (this.ambientLight instanceof THREE.AmbientLight) {
+			this.scene.remove(this.ambientLight);
+		}
+		this.ambientLight = new THREE.AmbientLight(worldInfo.ambientColor);
+        this.scene.add(this.ambientLight);
+
+        var d = new Date();
+	    this.startTime = d.getTime();
+	    this.lastCheck = 0;
+
+	},
+	updateKeyInfo: function() {
+		var text = "";
+		if (this.playerHasKey(this.keys[1].keyColor)) {
+			text = text + " S1 ";
+		}
+		if (this.playerHasKey(this.keys[2].keyColor)) {
+			text = text + " S2 ";
+		}
+		if (this.playerHasKey(this.keys[3].keyColor)) {
+			text = text + " S3 ";
+		}
+		console.log(text);
+		this.hud.keyInfo.innerHTML = text;
+
 	},
 	initWorld: function() {
 		// erstmal plane, später model
@@ -60,29 +197,7 @@ var ld30 = {
 		this.scene.add(plane);
 
 
-		// level
-		// 16 * 16
-		this.testLevel = [
-			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-			[1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
-			[1,0,3,0,1,0,0,0,0,0,0,0,1,0,0,1],
-			[1,7,7,7,1,0,0,0,0,0,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,1],
-			[1,0,0,0,0,4,0,0,1,1,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
-			[1,0,2,0,0,0,0,0,1,0,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-			[1,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1],
-			[1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
-			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-
-		];
-
-		this.collidableMeshes = this.testLevel;
+	
 
 		this.testRays = [
 		  new THREE.Vector3(0, 0, 1),
@@ -98,7 +213,7 @@ var ld30 = {
 
 		for (var y=0;y<=15;y++) {
 			for (var x=0;x<=15;x++) {
-				switch (this.testLevel[y][x]) {
+				switch (this.currentLevel.map[y][x]) {
 					case 1:
 						blockMesh = new THREE.Mesh(
 							new THREE.BoxGeometry(50,50,50),
@@ -112,30 +227,6 @@ var ld30 = {
 						this.collidableMeshes[y][x] = blockMesh;
 						this.scene.add(blockMesh); 
 					break;
-					case 2:
-						this.playerStartPos = {x: -375 + (x*50), z:-375 + (y*50)};
-					break;
-					// 3-5 = keys
-					case 3:
-						key = new Key(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 0xff0000, this);
-						this.entities.push(key);
-						this.scene.add(key.createMesh());
-					
-					break;
-					case 4:
-						key = new Key(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 0x00ff88, this);
-						this.entities.push(key);
-						this.scene.add(key.createMesh());
-					
-					break;
-	
-					// 6-8 = doors
-					case 7:
-						door = new Door(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 0x00ff88, this);
-						this.entities.push(door);
-						this.scene.add(door.createMesh());
-					break;
-
 				}
 			}
 		}
@@ -148,7 +239,7 @@ var ld30 = {
 		light.castShadow = true;
 		this.scene.add(light);
 */
- var light = new THREE.DirectionalLight(0xffA020);
+	 var light = new THREE.DirectionalLight(0xffA020);
       light.intensity = 2.0;
 //      light.position.set(0.5, 0.2, -2);
 	  light.position.set(400,120,400);
@@ -166,10 +257,6 @@ var ld30 = {
       light.shadowCameraTop = 10;
       light.shadowCameraBottom = -10;*/
       this.scene.add(light);
-
-		var ambientLight = new THREE.AmbientLight(0x001122);
-        this.scene.add(ambientLight);
-
 
 
 	},
@@ -286,9 +373,22 @@ var ld30 = {
 						} else {
 							return true;
 						}
+					} else if (this.entities[entityIndex] instanceof Portal) {
+						if (this.entities[entityIndex].toWorld == this.currentWorld) {
+							console.log("no entry");
+						} else {
+							this.loadWorld(this.entities[entityIndex].toWorld);
+						}
+					
 					} else if (this.entities[entityIndex] instanceof Key) {
 						this.collectedKeys.push(this.entities[entityIndex]);
 						this.entities[entityIndex].collect();
+						this.addLedger(function() {
+							console.log("coollect!!!");
+							ld30.entities[entityIndex].collect();
+						});
+
+						this.updateKeyInfo();
 					}
 				}
 			}		
@@ -296,6 +396,17 @@ var ld30 = {
 			}
 		}
 		return false;
+	},
+	addLedger: function(callback) {
+		var n = new Date();
+		diff = n.getTime() - this.startTime;
+		this.actionLedger[Math.floor(diff/100) - 1] = callback;
+	},
+	checkLedger: function(msec) {
+		if (this.actionLedger[msec]) {
+			var scope = this;
+			this.actionLedger[msec]();
+		}
 	},
 	fireBullet: function() {
 		var bullet = new Bullet(this.player.position, this.player.rotation, this);
@@ -326,6 +437,17 @@ var ld30 = {
 
 
 		this.camera.update();
+		// timestamp update
+		var n = new Date();
+		diff = n.getTime() - this.startTime;
+		this.hud.timeInfo.innerHTML = " " + (diff/1000) + " seconds";
+		var msec = Math.floor(diff/100);
+		if (this.lastCheck < msec) {
+
+			this.checkLedger(msec);
+			this.lastCheck = msec;
+		}
+
 		this.renderer.render(this.scene, this.camera);
 
 	},

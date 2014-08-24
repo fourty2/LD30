@@ -104,5 +104,13 @@ Entity.prototype = {
 			this.game.entities.splice(index, 1);
 			this.alive = false;
 		}
+	},
+	killSoft: function() {
+		index = this.game.entities.indexOf(this);
+		if (index != -1) {
+			this.game.scene.remove(this.getMesh());
+			this.game.entities.splice(index, 1);
+			this.alive = false;
+		}
 	} 
 }

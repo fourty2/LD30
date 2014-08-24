@@ -1,6 +1,7 @@
 var Key = function(position, color, gameScope) {
 	Entity.call(this, position, gameScope);
 	this.keyColor = color;
+	this.collectTime = null;
 }
 
 Key.prototype = Object.create(Entity.prototype);
