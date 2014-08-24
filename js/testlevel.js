@@ -26,6 +26,8 @@ TestLevel = {
 	worlds: {
 		1: {
 			ambientColor: 0x000520,
+			portalColor: 0xff8000,
+			skyColor: 0xff8000,
 			keyMapping: {
 				3: 3,
 				4: 2
@@ -38,6 +40,8 @@ TestLevel = {
 		},
 		2: {
 			ambientColor: 0x001144,
+			portalColor: 0x0088ff,
+			skyColor: 0x0088ff,
 			keyMapping: {
 				3: 1,
 			},

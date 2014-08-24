@@ -23,14 +23,19 @@ var ld30 = {
 		var WIDTH = window.innerWidth;
 		var HEIGHT = window.innerHeight;
 		var NEAR = 0.1;
-		var FAR = 1000;
+		var FAR = 2000;
 		var FOV = 45;
 		gamecanvas = document.getElementById('gamecanvas');
+		menu.style.display = 'block';
+		menu =  document.getElementById('menu');
+		menu.style.display = 'none';
+		hud =  document.getElementById('hud');
+		hud.style.display = 'block';
 		this.renderer = new THREE.WebGLRenderer({canvas: gamecanvas, antialias: true});
 		this.renderer.setSize(WIDTH, HEIGHT);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.shadowMapSoft = true;
-
+		this.renderer.setClearColor( 0x77aaff, 1);
 		this.hud.keyInfo = document.getElementById('keyinfo');
 		this.hud.timeInfo = document.getElementById('timeinfo');
 
@@ -39,7 +44,7 @@ var ld30 = {
 
 		// scene
 		this.scene = new THREE.Scene();
-		this.scene.fog = new THREE.Fog( 0x001020, 1, 900 );
+		this.scene.fog = new THREE.Fog( 0x77aaff, 1, 1800 );
 
 		// camera
 		this.camera = new THREE.TargetCamera(FOV, WIDTH / HEIGHT, 
@@ -63,27 +68,37 @@ var ld30 = {
 	loadLevel: function(level) {
 		this.currentLevel = level;
 		this.collidableMeshes = this.currentLevel.map;
+		this.loadKeyMesh(function(geometry) {
+			console.log(geometry);
+			// schlüssel anlegen
+			ld30.keys[1] = new Key(new THREE.Vector3(0,0,0), 
+						ld30.currentLevel.keyColors[1], ld30);
+			ld30.keys[1].setGeometry(geometry);
 
-		// schlüssel anlegen
-		this.keys[1] = new Key(new THREE.Vector3(0,0,0), 
-					this.currentLevel.keyColors[1], this);
-		this.keys[2] = new Key(new THREE.Vector3(0,0,0), 
-					this.currentLevel.keyColors[2], this);
-		this.keys[3] = new Key(new THREE.Vector3(0,0,0), 
-					this.currentLevel.keyColors[3], this);
+			ld30.keys[2] = new Key(new THREE.Vector3(0,0,0), 
+						ld30.currentLevel.keyColors[2], ld30);
+			ld30.keys[2].setGeometry(geometry);
 
-		// türen anlegen
+			ld30.keys[3] = new Key(new THREE.Vector3(0,0,0), 
+						ld30.currentLevel.keyColors[3], ld30);
+			ld30.keys[3].setGeometry(geometry);
 
-		this.loadWorld(1);
+			// türen anlegen
 
+			ld30.loadWorld(1);
 
-
-		
-
+		});		
+	},
+	loadKeyMesh: function(callback) {
+		this.loader.load('models/key.js', function(geometry, materials) {
+			callback(geometry);
+		});
 	},
 	loadWorld: function(world) {
 		this.currentWorld = world;
 		var worldInfo = this.currentLevel.worlds[world];
+		this.renderer.setClearColor( worldInfo.skyColor, 1);
+		this.scene.fog = new THREE.Fog( worldInfo.skyColor, 1, 1800 );
 		// remove all entities
 		for (var x = this.entities.length-1; x>=0; x--) {
 			this.entities[x].killSoft();
@@ -99,7 +114,7 @@ var ld30 = {
 					case 3:
 						if (worldInfo.keyMapping[3]) {
 							var key = this.keys[worldInfo.keyMapping[3]];
-							key.initPosition = new THREE.Vector3(-375 + (x*50),10,-375 + (y*50));
+							key.initPosition = new THREE.Vector3(-375 + (x*50),5,-375 + (y*50));
 							this.entities.push(key);
 							this.scene.add(key.createMesh());							
 						}
@@ -107,7 +122,7 @@ var ld30 = {
 					case 4:
 						if (worldInfo.keyMapping[4]) {
 							var key2 = this.keys[worldInfo.keyMapping[4]];
-							key2.initPosition = new THREE.Vector3(-375 + (x*50),10,-375 + (y*50));
+							key2.initPosition = new THREE.Vector3(-375 + (x*50),5,-375 + (y*50));
 							this.entities.push(key2);
 							this.scene.add(key2.createMesh());
 						}
@@ -115,7 +130,7 @@ var ld30 = {
 					case 5:
 						if (worldInfo.keyMapping[5]) {
 							var key3 = this.keys[worldInfo.keyMapping[5]];
-							key3.initPosition = new THREE.Vector3(-375 + (x*50),10,-375 + (y*50));
+							key3.initPosition = new THREE.Vector3(-375 + (x*50),5,-375 + (y*50));
 							this.entities.push(key3);
 							this.scene.add(key3.createMesh());
 						}
@@ -141,13 +156,13 @@ var ld30 = {
 					break;
 					// 9-11 = portals
 					case 9:
-						var portalColor = 0x000000;
+						var portalColor = this.currentLevel.worlds[1].portalColor;
 						portal = new Portal(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 1, portalColor, this);
 						this.entities.push(portal);
 						this.scene.add(portal.createMesh());
 					break;
 					case 10:
-						var portalColor = 0xffffff;
+						var portalColor = this.currentLevel.worlds[2].portalColor;
 						portal = new Portal(new THREE.Vector3(-375 + (x*50),10,-375 + (y*50)), 2, portalColor, this);
 						this.entities.push(portal);
 						this.scene.add(portal.createMesh());
@@ -204,7 +219,19 @@ var ld30 = {
 		plane.receiveShadow = true;
 		this.scene.add(plane);
 
+		var loader = new THREE.ColladaLoader();
+		loader.options.convertUpAxis = true;
 
+		loader.load('models/lowpoly.dae', function(collada) {
+			dae = collada.scene;
+			dae.position.set(-100,-160,-800);
+			dae.scale.set(150,150,150);
+			dae.rotateY( (Math.PI/2) * 3)
+
+			ld30.scene.add(dae);
+
+
+		});
 	
 
 		this.testRays = [
@@ -251,6 +278,9 @@ var ld30 = {
 		light.castShadow = true;
 		this.scene.add(light);
 */
+
+	
+
 	 var light = new THREE.DirectionalLight(0xffA020);
       light.intensity = 1.0;
 //      light.position.set(0.5, 0.2, -2);
@@ -421,13 +451,15 @@ var ld30 = {
 						if (this.playerHasKey(this.entities[entityIndex].doorColor)) {
 							this.entities[entityIndex].open();
 						} else {
+							this.showNoKeyMessage();
 							return true;
 						}
 					} else if (this.entities[entityIndex] instanceof Portal) {
 						if (this.entities[entityIndex].toWorld == this.currentWorld) {
-							console.log("no entry");
+							this.showNoEntryMessage();
 						} else {
 							this.loadWorld(this.entities[entityIndex].toWorld);
+							this.showNewWorldMessage();
 						}
 					
 					} else if (this.entities[entityIndex] instanceof Key) {
@@ -447,6 +479,34 @@ var ld30 = {
 		}
 		return false;
 	},
+	showNoEntryMessage: function() {
+		var x = document.getElementById('noentry');
+		x.style.display = "block";
+		window.setTimeout(function() {
+					var x = document.getElementById('noentry');
+					x.style.display = "none";
+		}, 1000)
+	},
+	showNoKeyMessage: function() {
+		var x = document.getElementById('nokey');
+		x.style.display = "block";
+		window.setTimeout(function() {
+					var x = document.getElementById('nokey');
+					x.style.display = "none";
+		}, 1000)
+	},
+	showNewWorldMessage:function() {
+		if (!this.seenWorldMessage) {
+			this.seenWorldMessage = true;
+			var x = document.getElementById('newworld');
+			x.style.display = "block";
+			window.setTimeout(function() {
+						var x = document.getElementById('newworld');
+						x.style.display = "none";
+			}, 3000)			
+		}
+	},
+
 	addLedger: function(callback) {
 		var n = new Date();
 		diff = n.getTime() - this.startTime;
@@ -544,11 +604,21 @@ var ld30 = {
 	        ld30.controls.setRight( true );
 	         ld30.currentSequence = 'walking';
 	    }
+	    else if (key == 27) {
+
+		menu =  document.getElementById('menu');
+		menu.style.display = 'block';
+		hud =  document.getElementById('hud');
+		hud.style.display = 'none';
+
+		gc =  document.getElementById('gamecanvas');
+		gc.style.display = 'none';
+
+	    }
 	},
 
 	onKeyUp: function( e ) {
 	    var key = e.keyCode;
-        ld30.currentSequence = 'standing';
 
 	    if( key === 87 ) {
 	        ld30.controls.setForward( false );
@@ -569,4 +639,4 @@ var ld30 = {
 
 
 };
-ld30.init();
+//ld30.init();

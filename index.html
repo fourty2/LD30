@@ -1,14 +1,83 @@
+<!doctype html>
 <html>
 <head>
 	<title>LD30</title>
+	<meta charset="utf-8">
+	<title>unnona - a ludum dare entry</title>
+	<style type="text/css">
+
+	body {
+		background-color: #e0e0e0;
+	}
+
+	#menu {
+
+		background-color: #ff8033;
+		text-align: center;
+		padding: 30px;
+	}
+
+	h1, button {
+		color: white;
+		text-align: center;
+		background-color: #0044aa;
+	}
+	button {
+		border: 1px solid #003377;
+		padding: 20px;
+		font-size: 24px;
+	}
+
+	</style>
 </head>
-<body style="font-family: Arial">
-	<div style="text-align:center; margin: auto;">LD30</div>
+<body style="font-family: Helvetica Neue, Arial; margin: 0 0;">
 	<canvas id="gamecanvas"></canvas>
-	<div id="hud" style="position: absolute; top:80px; z-index:100000;background-color:green;color:white;">
-	Keys: <span id="keyinfo"></span><br />
-	Time: <span id="timeinfo"></span>
+	<div id="hud" style="position: absolute; bottom:20px; left: 80px; z-index:100000;color:white;display: none;font-size:30px;">
+	Mind The Time: <span id="timeinfo"></span> - Your Keys: <span id="keyinfo"></span>
 	</div>
+	<div id="noentry" style="z-index:1000; position:absolute; top:0px;width: 100%; display:none">
+			<h1>no entry! you are already in this world</h1>
+	</div>
+	<div id="nokey" style="z-index:1000; position:absolute; top:0px;width: 100%;display: none">
+			<h1>you don't have the right key</h1>
+	</div>
+
+	<div id="newworld" style="z-index:1000; position:absolute; top:0px;width: 100%;display: none">
+			<h1>you have passed portal. looks familar.. </h1>
+	</div>
+
+	<div id="menu">
+		<h1>unnona</h1>
+		<div style="text-align: center">
+		you'll need a webgl capable browser<br /><br />
+		</div>
+
+		<div style="width: 60%; text-align:left; margin: 0 auto;">
+		<b>Controls:</b> WASD, Mouse Aim, Left Click to shoot at big balls.<br /><br />
+		<b>Instructions:</b><br />
+		* get all 3 keys<br />
+		* doors can be opened with the keys (run against them)<br />
+		* look for the donuts (portals) to reach other parallel worlds<br />
+		* check the time - all the things you do in one world, happen in other worlds<br />
+		<br /><br />
+		<b>Story:</b> <br />
+You’re trapped and have to find all keys, to get out.<br />
+Some keys are behind locked doors (which you can open with one of other keys).<br />
+<br />
+Sounds easy, but the same world exists multiple times in an multiverse scenario – and there are the other keys.<br />
+You reach them by going through portals.<br/>
+<br />
+But there is one more thing, you know.. the time ..
+Now, go, and get the right key, while it’s there – maybe in another world, you have already taken it..<br />
+<br />
+</div>
+
+
+
+		<button onclick="ld30.init()">start game</button>
+
+	</div>
+
 	<script src="js/three.min.js"></script>
 	<script src="js/ColladaLoader.js"></script>
 

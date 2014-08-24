@@ -72,11 +72,15 @@ function ObjectControls( opts ) {
             dec = options.positionVelocityDecrement,
             max = options.maxPositionVelocity;
 
+        var walking = false;
+
         if( forward ) {
             positionVector.z -= inc;
+            walking = true;
         }
         else if( back ) {
             positionVector.z += inc;
+            walking = true;
         }
         else {
             positionVector.z *= dec;
@@ -84,9 +88,11 @@ function ObjectControls( opts ) {
 
         if( left ) {
             positionVector.x -= inc;
+            walking = true;
         }
         else if( right ) {
             positionVector.x += inc;
+            walking = true;
         }
         else {
             positionVector.x *= dec;
@@ -105,6 +111,10 @@ function ObjectControls( opts ) {
         }
         else if( positionVector.x < -max ) {
             positionVector.x = -max;
+        }
+
+        if (!walking) {
+            ld30.currentSequence = 'standing';
         }
 
         positionVector.y *= dec;
