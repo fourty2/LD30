@@ -15,6 +15,8 @@ var ld30 = {
 	actionLedger: {},
 	startTime: 0,
 	lastCheck: 0,
+	playerAnimation: null,
+	clock: null,
 	init:  function() {
 		var WIDTH = window.innerWidth;
 		var HEIGHT = window.innerHeight;
@@ -29,6 +31,9 @@ var ld30 = {
 
 		this.hud.keyInfo = document.getElementById('keyinfo');
 		this.hud.timeInfo = document.getElementById('timeinfo');
+
+		// clock
+		this.clock  = new THREE.Clock();
 
 		// scene
 		this.scene = new THREE.Scene();
@@ -283,35 +288,70 @@ var ld30 = {
 		return false;
 	},
 	initPlayer: function() {
-		this.player = new THREE.Mesh(
+		var loader = new THREE.JSONLoader();
+
+		scope = this;
+		//loader.options.convertUpAxis = true;
+		loader.load('models/player2.js', function(geometry, materials) {
+	
+			console.log("loaded");
+	
+			
+			ld30.player = new THREE.SkinnedMesh(
+				geometry, 
+				new THREE.MeshFaceMaterial(materials)
+//				new THREE.MeshLambertMaterial({shading: THREE.FlatShading, color: 0x00ff00})
+				);
+			ld30.player.castShadow = true;
+			ld30.player.receiveShadow = true;
+			ld30.player.scale.set(5,5,5);
+			ld30.player.position.y = 5;
+			ld30.player.position.x = ld30.playerStartPos.x;
+			ld30.player.position.z = ld30.playerStartPos.z;
+			
+
+			ld30.scene.add(ld30.player);
+			ld30.camera.addTarget({
+				name: 'player',
+				targetObject: ld30.player,
+				cameraPosition: new THREE.Vector3(0,50,200),
+				fixed: false,
+				stiffness: 0.05,
+				matchRotation: true
+			});
+
+			ld30.camera.setTarget('player');
+
+			ld30.controls = new ObjectControls({
+				mousePos: ld30.mousePos,
+				targetObject: ld30.player,
+			/*	rotationDamping: 10000*/
+			});
+
+		
+			for (var k in ld30.player.material.materials) {
+				var mat = ld30.player.material.materials[k];
+				mat.skinning = true;
+			}
+
+//			THREE.AnimationHandler.add(ld30.player.geometry.animations[0]);
+			console.log (ld30.player.geometry);
+//			ld30.playerAnimation = new THREE.Animation(ld30.player, "walk", THREE.AnimationHandler.CATMULLROM);
+			ld30.playerAnimation = new THREE.Animation(ld30.player, ld30.player.geometry.animations[0]);
+		
+			ld30.playerAnimation.play();
+			
+
+		});
+
+
+/*		this.player = new THREE.Mesh(
 				new THREE.SphereGeometry(5,8,8),
 				new THREE.MeshLambertMaterial({color: 0x00ff00})
 			);
-		this.player.castShadow = true;
-		this.player.receiveShadow = true;
-		this.player.position.y = 5;
-		this.player.position.x = this.playerStartPos.x;
-		this.player.position.z = this.playerStartPos.z;
+*/	
 
-		this.scene.add(this.player);
-
-		this.camera.addTarget({
-			name: 'player',
-			targetObject: this.player,
-			cameraPosition: new THREE.Vector3(0,50,200),
-			fixed: false,
-			stiffness: 0.1,
-			matchRotation: true
-		});
-
-		this.camera.setTarget('player');
-
-
-		this.controls = new ObjectControls({
-			mousePos: this.mousePos,
-			targetObject: this.player,
-		/*	rotationDamping: 10000*/
-		});
+		
 
 		document.addEventListener( 'mousemove', this.onMouseMove, false );
 		document.addEventListener( 'keydown', this.onKeyDown, false );
@@ -440,12 +480,18 @@ var ld30 = {
 		// timestamp update
 		var n = new Date();
 		diff = n.getTime() - this.startTime;
-		this.hud.timeInfo.innerHTML = " " + (diff/1000) + " seconds";
+		this.hud.timeInfo.innerHTML = " " + Math.floor((diff/1000)) + " seconds";
 		var msec = Math.floor(diff/100);
 		if (this.lastCheck < msec) {
 
 			this.checkLedger(msec);
 			this.lastCheck = msec;
+		}
+
+		var delta = this.clock.getDelta();
+
+		if (this.playerAnimation) {
+			this.playerAnimation.update(delta);
 		}
 
 		this.renderer.render(this.scene, this.camera);
