@@ -25,7 +25,7 @@ TestLevel = {
 	},
 	worlds: {
 		1: {
-			ambientColor: 0x003366,
+			ambientColor: 0x000520,
 			keyMapping: {
 				3: 3,
 				4: 2

@@ -16,7 +16,9 @@ var ld30 = {
 	startTime: 0,
 	lastCheck: 0,
 	playerAnimation: null,
+	currentSequence: 'standing',
 	clock: null,
+	loader: new THREE.JSONLoader(),
 	init:  function() {
 		var WIDTH = window.innerWidth;
 		var HEIGHT = window.innerHeight;
@@ -37,6 +39,7 @@ var ld30 = {
 
 		// scene
 		this.scene = new THREE.Scene();
+		this.scene.fog = new THREE.Fog( 0x001020, 1, 900 );
 
 		// camera
 		this.camera = new THREE.TargetCamera(FOV, WIDTH / HEIGHT, 
@@ -215,26 +218,30 @@ var ld30 = {
 		  new THREE.Vector3(-1, 0, 1)
 		];
 		this.caster = new THREE.Raycaster();	
+		this.loader.load('models/block.js', function(geometry, materials) {
 
-		for (var y=0;y<=15;y++) {
-			for (var x=0;x<=15;x++) {
-				switch (this.currentLevel.map[y][x]) {
-					case 1:
-						blockMesh = new THREE.Mesh(
-							new THREE.BoxGeometry(50,50,50),
-							new THREE.MeshLambertMaterial({color: 0xff0000})
-						);
-						blockMesh.castShadow = true;
-						blockMesh.receiveShadow = true;
-						blockMesh.position.x = -375 + (x*50);
-						blockMesh.position.z = -375 + (y*50);
+			for (var y=0;y<=15;y++) {
+				for (var x=0;x<=15;x++) {
+					switch (ld30.currentLevel.map[y][x]) {
+						case 1:
+							blockMesh = new THREE.SkinnedMesh(
+								geometry,
+								new THREE.MeshLambertMaterial({shading: THREE.FlatShading, color: 0xff0000})
+							);
+							blockMesh.castShadow = true;
+							blockMesh.receiveShadow = true;
+							blockMesh.position.x = -375 + (x*50);
+							blockMesh.position.z = -375 + (y*50);
+							blockMesh.position.y = 20;
 
-						this.collidableMeshes[y][x] = blockMesh;
-						this.scene.add(blockMesh); 
-					break;
+							blockMesh.scale.set(27,20,27);
+							ld30.collidableMeshes[y][x] = blockMesh;
+							ld30.scene.add(blockMesh); 
+						break;
+					}
 				}
 			}
-		}
+		});
 
 
 
@@ -245,7 +252,7 @@ var ld30 = {
 		this.scene.add(light);
 */
 	 var light = new THREE.DirectionalLight(0xffA020);
-      light.intensity = 2.0;
+      light.intensity = 1.0;
 //      light.position.set(0.5, 0.2, -2);
 	  light.position.set(400,120,400);
       light.target.position.set(0, 0, 0);
@@ -288,11 +295,11 @@ var ld30 = {
 		return false;
 	},
 	initPlayer: function() {
-		var loader = new THREE.JSONLoader();
+		
 
 		scope = this;
 		//loader.options.convertUpAxis = true;
-		loader.load('models/player2.js', function(geometry, materials) {
+		this.loader.load('models/player3.js', function(geometry, materials) {
 	
 			console.log("loaded");
 	
@@ -311,10 +318,13 @@ var ld30 = {
 			
 
 			ld30.scene.add(ld30.player);
+			var quaternion = new THREE.Quaternion();
+			quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -(Math.PI/10)  );
 			ld30.camera.addTarget({
 				name: 'player',
 				targetObject: ld30.player,
-				cameraPosition: new THREE.Vector3(0,50,200),
+				cameraPosition: new THREE.Vector3(0,10,200),
+				cameraRotation: quaternion,
 				fixed: false,
 				stiffness: 0.05,
 				matchRotation: true
@@ -488,9 +498,9 @@ var ld30 = {
 			this.lastCheck = msec;
 		}
 
-		var delta = this.clock.getDelta();
+		var delta = 4* this.clock.getDelta();
 
-		if (this.playerAnimation) {
+		if (this.playerAnimation && this.currentSequence == 'walking') {
 			this.playerAnimation.update(delta);
 		}
 
@@ -520,20 +530,25 @@ var ld30 = {
 	 
 	    if( key === 87 ) {
 	        ld30.controls.setForward( true );
+	        ld30.currentSequence = 'walking';
 	    }
 	    else if( key === 83 ) {
 	        ld30.controls.setBackward( true );
+	        ld30.currentSequence = 'walking';
 	    }
 	    else if( key === 65 ) {
 	        ld30.controls.setLeft( true );
+	         ld30.currentSequence = 'walking';
 	    }
 	    else if( key === 68 ) {
 	        ld30.controls.setRight( true );
+	         ld30.currentSequence = 'walking';
 	    }
 	},
 
 	onKeyUp: function( e ) {
 	    var key = e.keyCode;
+        ld30.currentSequence = 'standing';
 
 	    if( key === 87 ) {
 	        ld30.controls.setForward( false );

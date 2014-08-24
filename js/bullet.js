@@ -10,7 +10,7 @@ Bullet.prototype = Object.create(Entity.prototype);
 
 Bullet.prototype.createMesh = function() {
 	this.mesh = new THREE.Mesh(
-		new THREE.BoxGeometry(5,5,5),
+		new THREE.SphereGeometry(3,3,3),
 		new THREE.MeshLambertMaterial({color: 0xffff00})
 	);
 	this.mesh.castShadow = true;

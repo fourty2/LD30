@@ -3,14 +3,14 @@ function ObjectControls( opts ) {
         mousePos: null,
         targetObject: null,
         positionVelocityIncrement: 5,
-        positionVelocityDecrement: 0.95,
+        positionVelocityDecrement: 0.8,
 
         rotationDamping: 500,
 
         rollVelocityIncrement: 0.05,
         rollVelocityDecrement: 0.95,
 
-        maxPositionVelocity: 200,
+        maxPositionVelocity: 100,
         maxRotationVelocity: 10,
         maxRollVelocity: 2
     };
