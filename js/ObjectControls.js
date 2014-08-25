@@ -2,15 +2,15 @@ function ObjectControls( opts ) {
     var options = {
         mousePos: null,
         targetObject: null,
-        positionVelocityIncrement: 5,
-        positionVelocityDecrement: 0.8,
+        positionVelocityIncrement: 30,
+        positionVelocityDecrement:0.2,
 
-        rotationDamping: 500,
+        rotationDamping: 10,
 
         rollVelocityIncrement: 0.05,
         rollVelocityDecrement: 0.95,
 
-        maxPositionVelocity: 100,
+        maxPositionVelocity: 200,
         maxRotationVelocity: 10,
         maxRollVelocity: 2
     };
@@ -63,7 +63,10 @@ function ObjectControls( opts ) {
             rollRotation = -max;
         }
 
-        rotationVector.y = -mousePos.x / options.rotationDamping;
+
+
+
+        rotationVector.y = mousePos.x / options.rotationDamping;
         rotationVector.x = -mousePos.y / options.rotationDamping;
     };
 
@@ -136,6 +139,7 @@ function ObjectControls( opts ) {
 
         obj.quaternion.multiply( rotationQuaternion );
 
+        mousePos.set(0,0);
         obj.translateX( velX );
         obj.translateY( velY );
         obj.translateZ( velZ );

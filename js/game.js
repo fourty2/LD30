@@ -5,6 +5,7 @@ var ld30 = {
 	player: null,
 	scene: null,
 	mousePos: null,
+    mouseOffset: null,
 	entities: [],
 	collectedKeys: [],
 	keys: {},
@@ -23,7 +24,7 @@ var ld30 = {
 		var WIDTH = window.innerWidth;
 		var HEIGHT = window.innerHeight;
 		var NEAR = 0.1;
-		var FAR = 2000;
+		var FAR = 1600;
 		var FOV = 45;
 		gamecanvas = document.getElementById('gamecanvas');
 		menu.style.display = 'block';
@@ -64,8 +65,7 @@ var ld30 = {
 	loadLevel: function(level) {
 		this.currentLevel = level;
 		this.collidableMeshes = this.currentLevel.map;
-		this.loadKeyMesh(function(geometry) {
-			console.log(geometry);
+		this.loadKeyMesh(function(geometry) {;
 			// schlüssel anlegen
 			ld30.keys[1] = new Key(new THREE.Vector3(0,0,0), 
 						ld30.currentLevel.keyColors[1], ld30);
@@ -186,8 +186,6 @@ var ld30 = {
         var d = new Date();
 	    this.startTime = d.getTime();
 	    this.lastCheck = 0;
-
-	    console.log(this.scene);
 	},
 	updateKeyInfo: function() {
 		var text = "";
@@ -243,6 +241,7 @@ var ld30 = {
 		this.camera = new THREE.TargetCamera(FOV, WIDTH / HEIGHT, 
 			NEAR, FAR);
 		this.mousePos = new THREE.Vector2();
+        this.mouseOffset = new THREE.Vector2();
 
 		this.scene.add(this.camera);
 
@@ -373,8 +372,7 @@ var ld30 = {
 		//loader.options.convertUpAxis = true;
 		this.loader.load('models/player3.js', function(geometry, materials) {
 	
-			console.log("loaded");
-	
+
 			
 			ld30.player = new THREE.SkinnedMesh(
 				geometry, 
@@ -395,17 +393,17 @@ var ld30 = {
 			ld30.camera.addTarget({
 				name: 'player',
 				targetObject: ld30.player,
-				cameraPosition: new THREE.Vector3(0,30,200),
+				cameraPosition: new THREE.Vector3(0,20,200),
 				cameraRotation: quaternion,
 				fixed: false,
-				stiffness: 0.05,
-				matchRotation: true
+				stiffness: 0.1,
+				matchRotation: false
 			});
 
 			ld30.camera.setTarget('player');
 
 			ld30.controls = new ObjectControls({
-				mousePos: ld30.mousePos,
+				mousePos: ld30.mouseOffset,
 				targetObject: ld30.player,
 			/*	rotationDamping: 10000*/
 			});
@@ -639,14 +637,17 @@ var ld30 = {
 	},
 
 	onMouseMove: function( e ) {
-	    var x = e.pageX - (window.innerWidth/2),
+
+        var x = e.pageX - (window.innerWidth/2),
 	        y = e.pageY - (window.innerHeight/2),
 	        threshold = 50;
 
 	    if( (x > 0 && x < threshold) || (x < 0 && x > -threshold) ) {
 	        x = 0;
 	    }
-	    ld30.mousePos.set( x, 0);
+
+        ld30.mouseOffset.set( ld30.mousePos.x - x, 0);
+	    ld30.mousePos.set( x , 0);
 	},
 	onMouseOut: function (e) {
 		ld30.mousePos.set(0,0);
