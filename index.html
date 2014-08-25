@@ -15,6 +15,8 @@
 		background-color: #ff8033;
 		text-align: center;
 		padding: 30px;
+		position: absolute;
+		top: 0px;
 	}
 
 	h1, button {
@@ -27,7 +29,9 @@
 		padding: 20px;
 		font-size: 24px;
 	}
-
+	#minikey {
+		float:left;
+	}
 	</style>
 </head>
 <body style="font-family: Helvetica Neue, Arial; margin: 0 0;">
@@ -45,13 +49,19 @@
 	<div id="newworld" style="z-index:1000; position:absolute; top:0px;width: 100%;display: none">
 			<h1>you have passed portal. looks familar.. </h1>
 	</div>
+	<div id="levelcleared" style="z-index:1000; position:absolute; top:40%;width: 100%;display: none">
+			<h1>yeah \o/ you found all keys in level <span id="lvl"></span> - on to another one!</h1>
+	</div>
 
+	<div id="finished" style="z-index:1000; position:absolute; top:40px;width: 100%;display: none">
+			<h1>sorry, there are no more levels :/ :/ come back tomorrow!</h1>
+	</div>
 	<div id="menu">
 		<h1>unnona</h1>
 		<div style="text-align: center">
 		you'll need a webgl capable browser<br /><br />
 		</div>
-
+		<canvas id="minikey"></canvas>
 		<div style="width: 60%; text-align:left; margin: 0 auto;">
 		<b>Controls:</b> WASD, Mouse Aim, Left Click to shoot at big balls.<br /><br />
 		<b>Instructions:</b><br />
@@ -70,12 +80,13 @@ You reach them by going through portals.<br/>
 But there is one more thing, you know.. the time ..
 Now, go, and get the right key, while it’s there – maybe in another world, you have already taken it..<br />
 <br />
+<small>disclaimer: sorry, no sound, no special effects - just game :/ </small>
 </div>
 
 
 
-		<button onclick="ld30.init()">start game</button>
-
+		<button onclick="ld30.init()">start game</button><br />
+		<small>a game by <a href="http://twitter.com/snooze82" target="_blank">@snooze82</a> for the 30th LudumDare Compo</small>
 	</div>
 
 	<script src="js/three.min.js"></script>
@@ -85,6 +96,8 @@ Now, go, and get the right key, while it’s there – maybe in another world, y
 	<script src="js/THREE.TargetCamera.min.js"></script>
 	<script src="js/entity.js"></script>	
 	<script src="js/testlevel.js"></script>
+	<script src="js/level1.js"></script>
+	<script src="js/level2.js"></script>
 	<script src="js/portal.js"></script>
 	<script src="js/door.js"></script>	
 	<script src="js/key.js"></script>	
@@ -92,5 +105,7 @@ Now, go, and get the right key, while it’s there – maybe in another world, y
 	<script src="js/bullet.js"></script>
 	<script src="js/enemy.js"></script>
 	<script src="js/game.js"></script>
+	<script src="js/minikey.js"></script>
+
 </body>
 </html>

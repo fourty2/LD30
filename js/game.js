@@ -47,11 +47,7 @@ var ld30 = {
 		this.scene.fog = new THREE.Fog( 0x77aaff, 1, 1800 );
 
 		// camera
-		this.camera = new THREE.TargetCamera(FOV, WIDTH / HEIGHT, 
-			NEAR, FAR);
-		this.mousePos = new THREE.Vector2();
 
-		this.scene.add(this.camera);
 		this.loadLevel(TestLevel)
 
 		// basic world .. 
@@ -115,6 +111,7 @@ var ld30 = {
 						if (worldInfo.keyMapping[3]) {
 							var key = this.keys[worldInfo.keyMapping[3]];
 							key.initPosition = new THREE.Vector3(-375 + (x*50),5,-375 + (y*50));
+							key.mapIndex = 3;
 							this.entities.push(key);
 							this.scene.add(key.createMesh());							
 						}
@@ -123,6 +120,7 @@ var ld30 = {
 						if (worldInfo.keyMapping[4]) {
 							var key2 = this.keys[worldInfo.keyMapping[4]];
 							key2.initPosition = new THREE.Vector3(-375 + (x*50),5,-375 + (y*50));
+							key2.mapIndex = 4;
 							this.entities.push(key2);
 							this.scene.add(key2.createMesh());
 						}
@@ -131,6 +129,7 @@ var ld30 = {
 						if (worldInfo.keyMapping[5]) {
 							var key3 = this.keys[worldInfo.keyMapping[5]];
 							key3.initPosition = new THREE.Vector3(-375 + (x*50),5,-375 + (y*50));
+							key3.mapIndex = 5;
 							this.entities.push(key3);
 							this.scene.add(key3.createMesh());
 						}
@@ -188,24 +187,64 @@ var ld30 = {
 	    this.startTime = d.getTime();
 	    this.lastCheck = 0;
 
+	    console.log(this.scene);
 	},
 	updateKeyInfo: function() {
 		var text = "";
+		var numKeys = 0;
 		if (this.playerHasKey(this.keys[1].keyColor)) {
 			text = text + " S1 ";
+			numKeys++;
 		}
 		if (this.playerHasKey(this.keys[2].keyColor)) {
 			text = text + " S2 ";
+			numKeys++;
 		}
 		if (this.playerHasKey(this.keys[3].keyColor)) {
 			text = text + " S3 ";
+			numKeys++;
 		}
-		console.log(text);
+
+		if (numKeys == 3) {
+			
+			if (this.currentLevel.name == 'Warm up') {
+				this.showLevelClearedMessage();
+				this.loadLevel(Level1);
+				this.initWorld();
+
+			}
+			else if (this.currentLevel.name == 'Wednesday') {
+				this.showLevelClearedMessage();
+				this.loadLevel(Level2);
+				this.initWorld();
+				this.hud.keyInfo.innerHTML = "";
+
+			} else {
+				this.showFinishedMessage();
+			}
+		}
 		this.hud.keyInfo.innerHTML = text;
 
 	},
 	initWorld: function() {
+		for (var x=this.scene.children.length-1; x>=0; x--) {
+			this.scene.remove(this.scene.children[x]);
+		}
+
+		this.collectedKeys = [];
+		this.actionLedger = {};
+
+				var WIDTH = window.innerWidth;
+		var HEIGHT = window.innerHeight;
+		var NEAR = 0.1;
+		var FAR = 2000;
+		var FOV = 45;
 		// erstmal plane, später model
+		this.camera = new THREE.TargetCamera(FOV, WIDTH / HEIGHT, 
+			NEAR, FAR);
+		this.mousePos = new THREE.Vector2();
+
+		this.scene.add(this.camera);
 
 		var planeGeometry = new THREE.PlaneGeometry(800,800, 1, 1);
 		planeGeometry.applyMatrix( 
@@ -326,6 +365,9 @@ var ld30 = {
 	},
 	initPlayer: function() {
 		
+		if (this.player) {
+			this.scene.remove(this.player);
+		}
 
 		scope = this;
 		//loader.options.convertUpAxis = true;
@@ -349,11 +391,11 @@ var ld30 = {
 
 			ld30.scene.add(ld30.player);
 			var quaternion = new THREE.Quaternion();
-			quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -(Math.PI/10)  );
+			quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -(Math.PI/8)  );
 			ld30.camera.addTarget({
 				name: 'player',
 				targetObject: ld30.player,
-				cameraPosition: new THREE.Vector3(0,10,200),
+				cameraPosition: new THREE.Vector3(0,30,200),
 				cameraRotation: quaternion,
 				fixed: false,
 				stiffness: 0.05,
@@ -375,7 +417,6 @@ var ld30 = {
 			}
 
 //			THREE.AnimationHandler.add(ld30.player.geometry.animations[0]);
-			console.log (ld30.player.geometry);
 //			ld30.playerAnimation = new THREE.Animation(ld30.player, "walk", THREE.AnimationHandler.CATMULLROM);
 			ld30.playerAnimation = new THREE.Animation(ld30.player, ld30.player.geometry.animations[0]);
 		
@@ -465,9 +506,17 @@ var ld30 = {
 					} else if (this.entities[entityIndex] instanceof Key) {
 						this.collectedKeys.push(this.entities[entityIndex]);
 						this.entities[entityIndex].collect();
+						var mapIndex = this.entities[entityIndex].mapIndex;
 						this.addLedger(function() {
-							console.log("coollect!!!");
-							ld30.entities[entityIndex].collect();
+						
+							for (var i=1; i<=3;i++) {
+								if (ld30.keys[i].mapIndex == mapIndex) {
+									ld30.keys[i].collect();
+								}
+							}
+
+							//console.log("coollect!!!");
+							//ld30.entities[entityIndex].collect();
 						});
 
 						this.updateKeyInfo();
@@ -495,6 +544,10 @@ var ld30 = {
 					x.style.display = "none";
 		}, 1000)
 	},
+	showFinishedMessage: function() {
+		var x = document.getElementById('finished');
+		x.style.display = "block";
+	},
 	showNewWorldMessage:function() {
 		if (!this.seenWorldMessage) {
 			this.seenWorldMessage = true;
@@ -506,7 +559,17 @@ var ld30 = {
 			}, 3000)			
 		}
 	},
-
+	showLevelClearedMessage: function() {
+			var x = document.getElementById('levelcleared');
+			var y = document.getElementById('lvl');
+			y.innerHTML = this.currentLevel.name;
+			x.style.display = "block";
+			window.setTimeout(function() {
+						var x = document.getElementById('levelcleared');
+						x.style.display = "none";
+			}, 3000)			
+		
+	},
 	addLedger: function(callback) {
 		var n = new Date();
 		diff = n.getTime() - this.startTime;
@@ -526,44 +589,47 @@ var ld30 = {
 		this.scene.add(mesh);
 	},
 	render: function() {
-		var oldPosition = this.player.position.clone();
-		this.controls.update(0.016); 
-		if (this.checkCollision() || this.collidesWithEntity()) {
-			this.player.position.set(oldPosition.x, oldPosition.y, oldPosition.z);
-		}
-		
-		oldPosition = null;
-
-		// bewege alle entities
-		/*this.entities.forEach(function(entity)) {
-			entity.update();
-		}*/
-		for (var i = this.entities.length-1; i>=0; i--) {
-			if (this.entities[i] instanceof Entity) {
-				this.entities[i].update();
+		if (this.player) {
+			var oldPosition = this.player.position.clone();
+			this.controls.update(0.016); 
+			if (this.checkCollision() || this.collidesWithEntity()) {
+				this.player.position.set(oldPosition.x, oldPosition.y, oldPosition.z);
 			}
+			
+			oldPosition = null;
+
+			// bewege alle entities
+			/*this.entities.forEach(function(entity)) {
+				entity.update();
+			}*/
+			for (var i = this.entities.length-1; i>=0; i--) {
+				if (this.entities[i] instanceof Entity) {
+					this.entities[i].update();
+				}
+			}
+
+
+
+			this.camera.update();
+			// timestamp update
+			var n = new Date();
+			diff = n.getTime() - this.startTime;
+			this.hud.timeInfo.innerHTML = " " + Math.floor((diff/1000)) + " seconds";
+			var msec = Math.floor(diff/100);
+			if (this.lastCheck < msec) {
+
+				this.checkLedger(msec);
+				this.lastCheck = msec;
+			}
+
+			var delta = 4* this.clock.getDelta();
+
+			if (this.playerAnimation && this.currentSequence == 'walking') {
+				this.playerAnimation.update(delta);
+			}
+
+
 		}
-
-
-
-		this.camera.update();
-		// timestamp update
-		var n = new Date();
-		diff = n.getTime() - this.startTime;
-		this.hud.timeInfo.innerHTML = " " + Math.floor((diff/1000)) + " seconds";
-		var msec = Math.floor(diff/100);
-		if (this.lastCheck < msec) {
-
-			this.checkLedger(msec);
-			this.lastCheck = msec;
-		}
-
-		var delta = 4* this.clock.getDelta();
-
-		if (this.playerAnimation && this.currentSequence == 'walking') {
-			this.playerAnimation.update(delta);
-		}
-
 		this.renderer.render(this.scene, this.camera);
 
 	},
