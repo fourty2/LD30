@@ -56,11 +56,56 @@ var ld30 = {
 
 
 
-
+		window.addEventListener( 'resize', ld30.onWindowResize, false );
 	
-		//document.body.appendChild(this.renderer.domElement);
+		// http://www.html5rocks.com/en/tutorials/pointerlock/intro/
+
+		var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
+
+		if ( havePointerLock ) {
+
+			var element = document.body;
+
+			// Ask the browser to lock the pointer
+			element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+
+			if ( /Firefox/i.test( navigator.userAgent ) ) {
+
+				var fullscreenchange = function ( event ) {
+
+					if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
+
+						document.removeEventListener( 'fullscreenchange', fullscreenchange );
+						document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+
+						element.requestPointerLock();
+					}
+
+				}
+
+				document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+				document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
+
+				element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
+
+				element.requestFullscreen();
+
+			} else {
+
+				element.requestPointerLock();
+
+			}
+		}
 
 		this.animate();
+	},
+	onWindowResize: function() {
+
+		ld30.camera.aspect = window.innerWidth / window.innerHeight;
+		ld30.camera.updateProjectionMatrix();
+
+		ld30.renderer.setSize( window.innerWidth, window.innerHeight );
+
 	},
 	loadLevel: function(level) {
 		this.currentLevel = level;
@@ -638,19 +683,12 @@ var ld30 = {
 
 	onMouseMove: function( e ) {
 
-        var x = e.pageX - (window.innerWidth/2),
-	        y = e.pageY - (window.innerHeight/2),
-	        threshold = 50;
+		var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+		var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-	    if( (x > 0 && x < threshold) || (x < 0 && x > -threshold) ) {
-	        x = 0;
-	    }
+     	ld30.mouseOffset.set(-movementX, 0);
+	    ld30.mousePos.set( -movementX , 0);
 
-        ld30.mouseOffset.set( ld30.mousePos.x - x, 0);
-	    ld30.mousePos.set( x , 0);
-	},
-	onMouseOut: function (e) {
-		ld30.mousePos.set(0,0);
 	},
 	onKeyDown: function( e ) {
 	    var key = e.keyCode;
@@ -706,4 +744,7 @@ var ld30 = {
 
 
 };
+
+
+
 //ld30.init();

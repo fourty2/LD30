@@ -1,12 +1,12 @@
-var WIDTH = 150;
-var HEIGHT = 200;
+var WIDTH = 100;
+var HEIGHT = 100;
 var NEAR = 0.1;
 var FAR = 200;
 var FOV = 45;
 minicanvas = document.getElementById('minikey');
-var renderer = new THREE.WebGLRenderer({canvas: minicanvas, antialias: true});
+var renderer = new THREE.WebGLRenderer({canvas: minicanvas, antialias: true, alpha: true});
 renderer.setSize(WIDTH, HEIGHT);
-renderer.setClearColor( 0xff8033, 1);
+/*renderer.setClearColor( 0xff8033, 1);*/
 var camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT, 
 			NEAR, FAR);
 
@@ -26,6 +26,7 @@ scene.add(light);
 var key = null;
 var loader = new THREE.JSONLoader();
 loader.load('models/key.js', function(geometry, materials) {
+	geometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0, -0.15 ) );
 	key = new THREE.Mesh(
 		geometry,
 		new THREE.MeshLambertMaterial({color:0xF000F0})
